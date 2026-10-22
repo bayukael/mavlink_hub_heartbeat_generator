@@ -27,10 +27,12 @@ IMavlinkEndpointUser::writeMessage(msg) ──► MavlinkEndpoint ──► tran
 
 The heartbeat loop runs on a background thread. Each tick it:
 
-1. Encodes a `mavlink_heartbeat_t` from the configured MAVLink fields (`sysid`, `compid`, `type`, `autopilot`, `base_mode`, `custom_mode`, `system_status`).
+1. Encodes a `mavlink_heartbeat_t` from the configured MAVLink fields (`sysid`, `compid`, `type`, `autopilot`, `base_mode`, `custom_mode`, `system_status`) via `makeHeartbeatMessage` (in `src/HeartbeatMessageBuilder.h/.cpp`).
 2. Writes the resulting `mavlink_message_t` to the Mavlink endpoint via `IMavlinkEndpointUser::writeMessage()`.
 
 `mavlink_version` is set by the MAVLink protocol on encode and is not configurable.
+
+All plugin types (`HeartbeatAgent`, `HeartbeatAgentConfig`, `HeartbeatAgentDefinition`, `HeartbeatSender`, `makeHeartbeatMessage`) live in the `pendarlab::app::mavlink_hub::plugin` namespace, reflecting that this repository is an application-side mavlink_hub plugin rather than part of the SDK.
 
 ## Communication
 
@@ -105,9 +107,9 @@ When `mavlink_hub` spawns a `HeartbeatAgent`, it provides a set of string key/va
 | Key | Default | Description |
 | --- | --- | --- |
 | `heartbeat_freq` | `1.0` | Frequency at which HEARTBEAT messages are emitted, in Hz. Must be a positive number. |
-| `mavlink_sysid` | `1` | MAVLink system id stamped on emitted HEARTBEAT messages. |
-| `mavlink_compid` | `190` | MAVLink component id stamped on emitted HEARTBEAT messages (190 = onboard computer). |
-| `mavlink_type` | `43` | MAVLink vehicle/component type (`MAV_TYPE_*`; 43 = `MAV_TYPE_ONBOARD_CONTROLLER`). |
+| `mavlink_sysid` | `255` | MAVLink system id stamped on emitted HEARTBEAT messages. Defaults to 255 to avoid colliding with autopilots that commonly use system id 1. |
+| `mavlink_compid` | `198` | MAVLink component id stamped on emitted HEARTBEAT messages (198 = `MAV_COMP_ID_PAIRING_MANAGER`). |
+| `mavlink_type` | `6` | MAVLink vehicle/component type (`MAV_TYPE_*`; 6 = `MAV_TYPE_GCS`). |
 | `mavlink_autopilot` | `8` | MAVLink autopilot type (`MAV_AUTOPILOT_*`; 8 = `MAV_AUTOPILOT_INVALID`). |
 | `mavlink_base_mode` | `0` | MAVLink system mode bitmap (`MAV_MODE_FLAG_*`). |
 | `mavlink_custom_mode` | `0` | MAVLink custom mode bitfield (autopilot-specific). |
@@ -121,7 +123,7 @@ When `mavlink_hub` spawns a `HeartbeatAgent`, it provides a set of string key/va
 mavlink_endpoint_name: pixhawk_serial
 ```
 
-This emits one HEARTBEAT per second with sysid 1, compid 190, type onboard-controller, autopilot invalid, status active.
+This emits one HEARTBEAT per second with sysid 255, compid 198, type GCS, autopilot invalid, status active.
 
 ### Non-default frequency
 

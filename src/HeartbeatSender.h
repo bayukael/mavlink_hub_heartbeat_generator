@@ -6,7 +6,7 @@
 #include <functional>
 #include <memory>
 
-namespace pendarlab::sdk::mavlink_hub
+namespace pendarlab::app::mavlink_hub::plugin
 {
   /** A background thread that periodically emits one MAVLink message per tick through an
       injected send function. The class owns the thread lifecycle and the timing. It is
@@ -51,4 +51,4 @@ namespace pendarlab::sdk::mavlink_hub
     struct Impl;
     std::unique_ptr<Impl> d;
   };
-} // namespace pendarlab::sdk::mavlink_hub
+} // namespace pendarlab::app::mavlink_hub::plugin

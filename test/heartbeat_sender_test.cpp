@@ -8,7 +8,7 @@
 #include <thread>
 #include <vector>
 
-using pendarlab::sdk::mavlink_hub::HeartbeatSender;
+using pendarlab::app::mavlink_hub::plugin::HeartbeatSender;
 
 namespace
 {

@@ -8,11 +8,9 @@
 
 #include <memory>
 
-namespace pendarlab::sdk::mavlink_hub
+namespace pendarlab::app::mavlink_hub::plugin
 {
-  /** Builds a MAVLink HEARTBEAT message from the given config. @param config the heartbeat
-      parameters (sysid, compid, type, ...). @param msg filled with the encoded HEARTBEAT. */
-  void makeHeartbeatMessage(const HeartbeatAgentConfig& config, mavlink_message_t& msg);
+  using namespace pendarlab::sdk::mavlink_hub;
 
   /** The heartbeat generator agent. Emits MAVLink HEARTBEAT messages to a Mavlink endpoint at
       a configurable frequency on a background thread. */
@@ -42,4 +40,4 @@ namespace pendarlab::sdk::mavlink_hub
     struct HeartbeatAgentImpl;
     std::unique_ptr<HeartbeatAgentImpl> d;
   };
-} // namespace pendarlab::sdk::mavlink_hub
+} // namespace pendarlab::app::mavlink_hub::plugin

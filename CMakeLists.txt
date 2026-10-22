@@ -9,6 +9,7 @@ find_package(PendarlabMavlinkHubSdk 1.0.0 REQUIRED)
 
 add_library(MavlinkHubHeartbeatGenerator SHARED
   src/HeartbeatAgent.cpp
+  src/HeartbeatMessageBuilder.cpp
   src/HeartbeatSender.cpp
   src/HeartbeatAgentDefinition.cpp
 )

@@ -10,8 +10,10 @@
 #include <unordered_map>
 #include <vector>
 
-namespace pendarlab::sdk::mavlink_hub
+namespace pendarlab::app::mavlink_hub::plugin
 {
+  using namespace pendarlab::sdk::mavlink_hub;
+
   /// Parses an optional numeric field, returning true and writing out the value on success.
   template <typename T>
   static bool parseOptionalNumber(const std::unordered_map<std::string, std::string>& cfg, const std::string& key, T& out, std::vector<std::string>& messages, bool& hasError)
@@ -107,4 +109,4 @@ namespace pendarlab::sdk::mavlink_hub
     static HeartbeatAgentDefinition heartbeat_agent_def;
     return &heartbeat_agent_def;
   }
-} // namespace pendarlab::sdk::mavlink_hub
+} // namespace pendarlab::app::mavlink_hub::plugin

@@ -7,8 +7,10 @@
 #include <string>
 #include <unordered_map>
 
-namespace pendarlab::sdk::mavlink_hub
+namespace pendarlab::app::mavlink_hub::plugin
 {
+  using namespace pendarlab::sdk::mavlink_hub;
+
   /** Factory for HeartbeatAgent. Parses the plugin config and creates HeartbeatAgent instances. */
   class HeartbeatAgentDefinition : public AgentDefinition
   {
@@ -21,4 +23,4 @@ namespace pendarlab::sdk::mavlink_hub
         @return the new agent, or nullptr if cfg is not a HeartbeatAgentConfig. */
     virtual std::unique_ptr<Agent> create(const AgentConfig& cfg, std::unique_ptr<IManagerResourceRequester> requester) const override;
   };
-} // namespace pendarlab::sdk::mavlink_hub
+} // namespace pendarlab::app::mavlink_hub::plugin

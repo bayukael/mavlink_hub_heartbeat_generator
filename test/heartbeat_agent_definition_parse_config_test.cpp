@@ -6,7 +6,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace pendarlab::sdk::mavlink_hub
+namespace pendarlab::app::mavlink_hub::plugin
 {
   namespace
   {
@@ -90,9 +90,9 @@ namespace pendarlab::sdk::mavlink_hub
 
     ASSERT_TRUE(result.ok());
     const auto* config = static_cast<const HeartbeatAgentConfig*>(result.parsed.get());
-    EXPECT_EQ(config->mavlink_sysid, 1);
-    EXPECT_EQ(config->mavlink_compid, 190);
-    EXPECT_EQ(config->mavlink_type, 43);          // MAV_TYPE_ONBOARD_CONTROLLER
+    EXPECT_EQ(config->mavlink_sysid, 255);
+    EXPECT_EQ(config->mavlink_compid, 198);       // MAV_COMP_ID_PAIRING_MANAGER
+    EXPECT_EQ(config->mavlink_type, 6);           // MAV_TYPE_GCS
     EXPECT_EQ(config->mavlink_autopilot, 8);      // MAV_AUTOPILOT_INVALID
     EXPECT_EQ(config->mavlink_base_mode, 0);
     EXPECT_EQ(config->mavlink_custom_mode, 0);
@@ -131,4 +131,4 @@ namespace pendarlab::sdk::mavlink_hub
     EXPECT_FALSE(result.ok());
     EXPECT_EQ(result.parsed, nullptr);
   }
-} // namespace pendarlab::sdk::mavlink_hub
+} // namespace pendarlab::app::mavlink_hub::plugin

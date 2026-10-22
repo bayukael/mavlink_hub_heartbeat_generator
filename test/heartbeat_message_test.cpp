@@ -1,10 +1,10 @@
-#include "HeartbeatAgent.h"
 #include "HeartbeatAgentConfig.h"
+#include "HeartbeatMessageBuilder.h"
 
 #include <gtest/gtest.h>
 #include <mavlink/common/mavlink.h>
 
-namespace pendarlab::sdk::mavlink_hub
+namespace pendarlab::app::mavlink_hub::plugin
 {
   TEST(HeartbeatMessage, EmitsHeartbeatWithConfiguredFields)
   {
@@ -41,15 +41,15 @@ namespace pendarlab::sdk::mavlink_hub
     makeHeartbeatMessage(config, msg);
 
     EXPECT_EQ(msg.msgid, MAVLINK_MSG_ID_HEARTBEAT);
-    EXPECT_EQ(msg.sysid, 1);
-    EXPECT_EQ(msg.compid, 190);
+    EXPECT_EQ(msg.sysid, 255);
+    EXPECT_EQ(msg.compid, 198);       // MAV_COMP_ID_PAIRING_MANAGER
 
     mavlink_heartbeat_t heartbeat;
     mavlink_msg_heartbeat_decode(&msg, &heartbeat);
-    EXPECT_EQ(heartbeat.type, 43);          // MAV_TYPE_ONBOARD_CONTROLLER
-    EXPECT_EQ(heartbeat.autopilot, 8);      // MAV_AUTOPILOT_INVALID
+    EXPECT_EQ(heartbeat.type, 6);            // MAV_TYPE_GCS
+    EXPECT_EQ(heartbeat.autopilot, 8);       // MAV_AUTOPILOT_INVALID
     EXPECT_EQ(heartbeat.base_mode, 0);
     EXPECT_EQ(heartbeat.custom_mode, 0);
-    EXPECT_EQ(heartbeat.system_status, 4);  // MAV_STATE_ACTIVE
+    EXPECT_EQ(heartbeat.system_status, 4);   // MAV_STATE_ACTIVE
   }
-} // namespace pendarlab::sdk::mavlink_hub
+} // namespace pendarlab::app::mavlink_hub::plugin
