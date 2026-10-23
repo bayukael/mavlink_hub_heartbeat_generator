@@ -3,9 +3,12 @@
 #include "HeartbeatAgent.h"
 #include "HeartbeatAgentConfig.h"
 
+#include <algorithm>
+#include <cctype>
 #include <cstdint>
 #include <exception>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -34,8 +37,33 @@ namespace pendarlab::app::mavlink_hub::plugin
     }
   }
 
-  /// Parses the raw config map into a HeartbeatAgentConfig, validating required fields and the
-  /// optional heartbeat_freq and MAVLink field values. @param cfg the raw key/value config entries.
+  /// Splits a comma-separated list value into trimmed, non-empty entries. Empty tokens
+  /// (e.g. from a trailing comma or whitespace-only entries) are dropped. A completely
+  /// empty/absent value yields an empty list.
+  static std::vector<std::string> splitCommaSeparated(const std::string& value)
+  {
+    std::vector<std::string> result;
+    std::stringstream ss(value);
+    std::string token;
+    while (std::getline(ss, token, ',')) {
+      token.erase(token.begin(), std::find_if(token.begin(), token.end(), [](unsigned char c) {
+        return !std::isspace(c);
+      }));
+      token.erase(std::find_if(token.rbegin(), token.rend(), [](unsigned char c) {
+        return !std::isspace(c);
+      }).base(), token.end());
+      if (!token.empty()) {
+        result.push_back(token);
+      }
+    }
+    return result;
+  }
+
+  /// Parses the raw config map into a HeartbeatAgentConfig, validating the optional
+  /// heartbeat_freq, MAVLink field, and targeting values. The targeting block is encoded
+  /// as flat keys (mavlink_hub feeds agents a flat string-map): \"targeting.mode\",
+  /// \"targeting.exclude\" and \"targeting.endpoints\" (the two lists are comma-separated).
+  /// @param cfg the raw key/value config entries.
   /// @return a parse result with the parsed config on success, or populated error messages otherwise.
   AgentConfigParseResult HeartbeatAgentDefinition::parseConfig(const std::unordered_map<std::string, std::string>& cfg) const
   {
@@ -43,20 +71,28 @@ namespace pendarlab::app::mavlink_hub::plugin
     auto config = std::make_unique<HeartbeatAgentConfig>();
     bool hasError = false;
 
-    auto getRequired = [&cfg, &result, &hasError](const std::string& key) -> std::string {
-      auto it = cfg.find(key);
-      if (it == cfg.end()) {
-        result.messages.push_back("[HeartbeatAgent]: required entry is missing: " + key);
+    // --- targeting block ---
+    // mode: default all_except; reject any unrecognized value.
+    auto modeIt = cfg.find("targeting.mode");
+    if (modeIt != cfg.end()) {
+      const std::string& mode = modeIt->second;
+      if (mode == "all_except") {
+        config->targeting.mode = HeartbeatTargetingMode::AllExcept;
+      } else if (mode == "listed") {
+        config->targeting.mode = HeartbeatTargetingMode::Listed;
+      } else {
+        result.messages.push_back("[HeartbeatAgent]: unrecognized targeting.mode: " + mode);
         hasError = true;
-        return "";
       }
-      return it->second;
-    };
-
-    config->mavlink_endpoint_name = getRequired("mavlink_endpoint_name");
-    if (config->mavlink_endpoint_name.empty()) {
-      // mavlink_endpoint_name was found but empty; treat as a missing requirement.
-      hasError = true;
+    }
+    // Lists: comma-separated, always parsed if present; which one applies is chosen by mode.
+    auto excludeIt = cfg.find("targeting.exclude");
+    if (excludeIt != cfg.end()) {
+      config->targeting.exclude = splitCommaSeparated(excludeIt->second);
+    }
+    auto endpointsIt = cfg.find("targeting.endpoints");
+    if (endpointsIt != cfg.end()) {
+      config->targeting.endpoints = splitCommaSeparated(endpointsIt->second);
     }
 
     auto freqIt = cfg.find("heartbeat_freq");

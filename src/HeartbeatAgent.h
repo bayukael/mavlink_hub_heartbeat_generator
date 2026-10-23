@@ -7,6 +7,8 @@
 #include "HeartbeatAgentConfig.h"
 
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace pendarlab::app::mavlink_hub::plugin
 {
@@ -37,6 +39,11 @@ namespace pendarlab::app::mavlink_hub::plugin
     virtual bool doConfigure(const AgentConfig& config) override;
 
   private:
+    /// Resolves the current target endpoint names per the configured targeting mode.
+    std::vector<std::string> resolveTargetNames();
+    /// Emits a heartbeat to every current target endpoint; returns true if at least one sent.
+    bool dispatchToTargets(const mavlink_message_t& msg);
+
     struct HeartbeatAgentImpl;
     std::unique_ptr<HeartbeatAgentImpl> d;
   };

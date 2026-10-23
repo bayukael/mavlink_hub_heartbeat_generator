@@ -11,42 +11,103 @@ namespace pendarlab::app::mavlink_hub::plugin
   namespace
   {
     HeartbeatAgentDefinition def;
-
-    std::unordered_map<std::string, std::string> validBaseConfig()
-    {
-      return {
-          {"mavlink_endpoint_name", "ep"},
-      };
-    }
   } // namespace
 
-  TEST(HeartbeatAgentDefinitionParseConfig, MissingRequiredFieldSetsParsedToNull)
+  TEST(HeartbeatAgentDefinitionParseConfig, EmptyConfigParsesWithDefaultTargeting)
   {
+    // A config without any targeting block defaults to mode all_except with empty exclude.
     auto result = def.parseConfig({});
 
+    ASSERT_TRUE(result.ok());
+    const auto* config = static_cast<const HeartbeatAgentConfig*>(result.parsed.get());
+    EXPECT_EQ(config->targeting.mode, HeartbeatTargetingMode::AllExcept);
+    EXPECT_TRUE(config->targeting.exclude.empty());
+    EXPECT_TRUE(config->targeting.endpoints.empty());
+  }
+
+  TEST(HeartbeatAgentDefinitionParseConfig, AllExceptModeParses)
+  {
+    auto result = def.parseConfig({{"targeting.mode", "all_except"}});
+
+    ASSERT_TRUE(result.ok());
+    const auto* config = static_cast<const HeartbeatAgentConfig*>(result.parsed.get());
+    EXPECT_EQ(config->targeting.mode, HeartbeatTargetingMode::AllExcept);
+  }
+
+  TEST(HeartbeatAgentDefinitionParseConfig, ListedModeParses)
+  {
+    auto result = def.parseConfig({{"targeting.mode", "listed"}});
+
+    ASSERT_TRUE(result.ok());
+    const auto* config = static_cast<const HeartbeatAgentConfig*>(result.parsed.get());
+    EXPECT_EQ(config->targeting.mode, HeartbeatTargetingMode::Listed);
+  }
+
+  TEST(HeartbeatAgentDefinitionParseConfig, UnrecognizedModeRejected)
+  {
+    auto result = def.parseConfig({{"targeting.mode", "bogus"}});
+
     EXPECT_FALSE(result.ok());
     EXPECT_EQ(result.parsed, nullptr);
   }
 
-  TEST(HeartbeatAgentDefinitionParseConfig, EmptyEndpointNameSetsParsedToNull)
+  TEST(HeartbeatAgentDefinitionParseConfig, ExcludeListParsedWhenProvided)
   {
-    auto result = def.parseConfig({{"mavlink_endpoint_name", ""}});
+    auto cfg = std::unordered_map<std::string, std::string>{{"targeting.mode", "all_except"}};
+    cfg["targeting.exclude"] = "pixhawk_serial, udp_link";
+    auto result = def.parseConfig(cfg);
 
-    EXPECT_FALSE(result.ok());
-    EXPECT_EQ(result.parsed, nullptr);
+    ASSERT_TRUE(result.ok());
+    const auto* config = static_cast<const HeartbeatAgentConfig*>(result.parsed.get());
+    ASSERT_EQ(config->targeting.exclude.size(), 2u);
+    EXPECT_EQ(config->targeting.exclude[0], "pixhawk_serial");
+    EXPECT_EQ(config->targeting.exclude[1], "udp_link");
   }
 
-  TEST(HeartbeatAgentDefinitionParseConfig, ValidConfigParses)
+  TEST(HeartbeatAgentDefinitionParseConfig, EndpointsListParsedWhenProvided)
   {
-    auto result = def.parseConfig(validBaseConfig());
+    auto cfg = std::unordered_map<std::string, std::string>{{"targeting.mode", "listed"}};
+    cfg["targeting.endpoints"] = "ep_a,ep_b,ep_c";
+    auto result = def.parseConfig(cfg);
 
-    EXPECT_TRUE(result.ok());
-    EXPECT_NE(result.parsed, nullptr);
+    ASSERT_TRUE(result.ok());
+    const auto* config = static_cast<const HeartbeatAgentConfig*>(result.parsed.get());
+    ASSERT_EQ(config->targeting.endpoints.size(), 3u);
+    EXPECT_EQ(config->targeting.endpoints[0], "ep_a");
+    EXPECT_EQ(config->targeting.endpoints[1], "ep_b");
+    EXPECT_EQ(config->targeting.endpoints[2], "ep_c");
+  }
+
+  TEST(HeartbeatAgentDefinitionParseConfig, EmptyListValuesYieldEmptyVectors)
+  {
+    auto cfg = std::unordered_map<std::string, std::string>{{"targeting.mode", "all_except"}};
+    cfg["targeting.exclude"] = "";
+    cfg["targeting.endpoints"] = " , ,";
+    auto result = def.parseConfig(cfg);
+
+    ASSERT_TRUE(result.ok());
+    const auto* config = static_cast<const HeartbeatAgentConfig*>(result.parsed.get());
+    EXPECT_TRUE(config->targeting.exclude.empty());
+    EXPECT_TRUE(config->targeting.endpoints.empty());
+  }
+
+  TEST(HeartbeatAgentDefinitionParseConfig, ListsOnlyApplyThroughSelectedMode)
+  {
+    // Provided lists are always parsed; mode selects which is used at runtime.
+    auto cfg = std::unordered_map<std::string, std::string>{{"targeting.mode", "all_except"}};
+    cfg["targeting.exclude"] = "a";
+    cfg["targeting.endpoints"] = "x,y";
+    auto result = def.parseConfig(cfg);
+
+    ASSERT_TRUE(result.ok());
+    const auto* config = static_cast<const HeartbeatAgentConfig*>(result.parsed.get());
+    EXPECT_EQ(config->targeting.exclude.size(), 1u);
+    EXPECT_EQ(config->targeting.endpoints.size(), 2u);
   }
 
   TEST(HeartbeatAgentDefinitionParseConfig, HeartbeatFreqDefaultsToOne)
   {
-    auto result = def.parseConfig(validBaseConfig());
+    auto result = def.parseConfig({});
 
     ASSERT_TRUE(result.ok());
     const auto* config = static_cast<const HeartbeatAgentConfig*>(result.parsed.get());
@@ -55,8 +116,7 @@ namespace pendarlab::app::mavlink_hub::plugin
 
   TEST(HeartbeatAgentDefinitionParseConfig, HeartbeatFreqParsedWhenProvided)
   {
-    auto cfg = validBaseConfig();
-    cfg["heartbeat_freq"] = "10.0";
+    auto cfg = std::unordered_map<std::string, std::string>{{"heartbeat_freq", "10.0"}};
     auto result = def.parseConfig(cfg);
 
     ASSERT_TRUE(result.ok());
@@ -66,9 +126,7 @@ namespace pendarlab::app::mavlink_hub::plugin
 
   TEST(HeartbeatAgentDefinitionParseConfig, HeartbeatFreqNonPositiveSetsParsedToNull)
   {
-    auto cfg = validBaseConfig();
-    cfg["heartbeat_freq"] = "0";
-    auto result = def.parseConfig(cfg);
+    auto result = def.parseConfig({{"heartbeat_freq", "0"}});
 
     EXPECT_FALSE(result.ok());
     EXPECT_EQ(result.parsed, nullptr);
@@ -76,9 +134,7 @@ namespace pendarlab::app::mavlink_hub::plugin
 
   TEST(HeartbeatAgentDefinitionParseConfig, HeartbeatFreqInvalidNumberSetsParsedToNull)
   {
-    auto cfg = validBaseConfig();
-    cfg["heartbeat_freq"] = "not_a_number";
-    auto result = def.parseConfig(cfg);
+    auto result = def.parseConfig({{"heartbeat_freq", "not_a_number"}});
 
     EXPECT_FALSE(result.ok());
     EXPECT_EQ(result.parsed, nullptr);
@@ -86,7 +142,7 @@ namespace pendarlab::app::mavlink_hub::plugin
 
   TEST(HeartbeatAgentDefinitionParseConfig, MavlinkFieldsDefault)
   {
-    auto result = def.parseConfig(validBaseConfig());
+    auto result = def.parseConfig({});
 
     ASSERT_TRUE(result.ok());
     const auto* config = static_cast<const HeartbeatAgentConfig*>(result.parsed.get());
@@ -101,7 +157,7 @@ namespace pendarlab::app::mavlink_hub::plugin
 
   TEST(HeartbeatAgentDefinitionParseConfig, MavlinkFieldsParsedWhenProvided)
   {
-    auto cfg = validBaseConfig();
+    auto cfg = std::unordered_map<std::string, std::string>{};
     cfg["mavlink_sysid"] = "42";
     cfg["mavlink_compid"] = "7";
     cfg["mavlink_type"] = "6";       // MAV_TYPE_GCS
@@ -124,9 +180,7 @@ namespace pendarlab::app::mavlink_hub::plugin
 
   TEST(HeartbeatAgentDefinitionParseConfig, InvalidNumericFieldSetsParsedToNull)
   {
-    auto cfg = validBaseConfig();
-    cfg["mavlink_sysid"] = "not_a_number";
-    auto result = def.parseConfig(cfg);
+    auto result = def.parseConfig({{"mavlink_sysid", "not_a_number"}});
 
     EXPECT_FALSE(result.ok());
     EXPECT_EQ(result.parsed, nullptr);

@@ -64,3 +64,16 @@ target_link_libraries(HeartbeatMessageTest
 )
 add_test(NAME HeartbeatMessageTest COMMAND HeartbeatMessageTest)
 
+add_executable(HeartbeatAgentTargetingTest
+  test/heartbeat_agent_targeting_test.cpp
+)
+target_include_directories(HeartbeatAgentTargetingTest PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_link_libraries(HeartbeatAgentTargetingTest
+  PRIVATE MavlinkHubHeartbeatGenerator
+  PRIVATE pendarlab::MavlinkHubSdk
+  PRIVATE GTest::gtest_main
+)
+add_test(NAME HeartbeatAgentTargetingTest COMMAND HeartbeatAgentTargetingTest)
+
