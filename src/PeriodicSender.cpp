@@ -6,7 +6,7 @@
 
 namespace pendarlab::app::mavlink_hub::plugin
 {
-  struct PeriodicSender::Impl
+  struct PeriodicSender::PeriodicSenderImpl
   {
     std::thread thread;
     std::atomic<bool> stop{true};
@@ -27,7 +27,7 @@ namespace pendarlab::app::mavlink_hub::plugin
 
   /// Stores the fixed wiring (builder, send fn, period).
   PeriodicSender::PeriodicSender(MessageBuilder builder, SendFn send, std::chrono::microseconds period)
-      : d(std::make_unique<Impl>())
+      : d(std::make_unique<PeriodicSenderImpl>())
   {
     d->message_builder = std::move(builder);
     d->send_fn = std::move(send);
@@ -56,7 +56,7 @@ namespace pendarlab::app::mavlink_hub::plugin
       return true;
     }
     d->stop.store(false);
-    d->thread = std::thread(&Impl::routine, d.get());
+    d->thread = std::thread(&PeriodicSenderImpl::routine, d.get());
     return true;
   }
 

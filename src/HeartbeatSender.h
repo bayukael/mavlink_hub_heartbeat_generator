@@ -2,13 +2,10 @@
 
 #include "HeartbeatAgentConfig.h"
 
-#include <mavlink/common/mavlink.h>
 #include <mavlink_hub_sdk/manager_resource_requester/IManagerResourceRequester.h>
 
 #include <chrono>
 #include <memory>
-#include <string>
-#include <vector>
 
 namespace pendarlab::app::mavlink_hub::plugin
 {
@@ -44,12 +41,7 @@ namespace pendarlab::app::mavlink_hub::plugin
     std::chrono::microseconds period() const;
 
   private:
-    /// Resolves the current target endpoint names per the configured targeting mode.
-    std::vector<std::string> resolveTargetNames();
-    /// Emits a heartbeat to every current target endpoint; returns true if at least one sent.
-    bool dispatchToTargets(const mavlink_message_t& msg);
-
-    struct Impl;
-    std::unique_ptr<Impl> d;
+    struct HeartbeatSenderImpl;
+    std::unique_ptr<HeartbeatSenderImpl> d;
   };
 } // namespace pendarlab::app::mavlink_hub::plugin

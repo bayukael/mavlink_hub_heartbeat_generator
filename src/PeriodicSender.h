@@ -43,7 +43,7 @@ namespace pendarlab::app::mavlink_hub::plugin
     bool isRunning() const;
 
   private:
-    struct Impl;
-    std::unique_ptr<Impl> d;
+    struct PeriodicSenderImpl;
+    std::unique_ptr<PeriodicSenderImpl> d;
   };
 } // namespace pendarlab::app::mavlink_hub::plugin
