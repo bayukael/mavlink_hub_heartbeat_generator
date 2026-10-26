@@ -4,18 +4,40 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace pendarlab::app::mavlink_hub::plugin
 {
   using namespace pendarlab::sdk::mavlink_hub;
 
+  /// Selects which endpoint list in HeartbeatTargeting determines the target set.
+  enum class HeartbeatTargetingMode
+  {
+    AllExcept, ///< Target every registered endpoint except those in HeartbeatTargeting::exclude.
+    Listed     ///< Target exactly the endpoints named in HeartbeatTargeting::endpoints.
+  };
+
+  /// The multi-endpoint targeting configuration of the heartbeat generator agent.
+  struct HeartbeatTargeting
+  {
+    /// Which list applies. Defaults to AllExcept. Under AllExcept the exclusion list
+    /// (exclude) applies; under Listed the endpoints list (endpoints) applies.
+    HeartbeatTargetingMode mode = HeartbeatTargetingMode::AllExcept;
+    /// Endpoint names to exclude when mode is AllExcept. An empty list targets every
+    /// registered endpoint. Names that do not match a registered endpoint are skipped.
+    std::vector<std::string> exclude;
+    /// Endpoint names to target exactly when mode is Listed. An empty list targets no
+    /// endpoints. Names that do not match a registered endpoint are skipped silently.
+    std::vector<std::string> endpoints;
+  };
+
   /** Configuration for the heartbeat generator agent. Subclasses AgentConfig to add the
-      fields needed to emit MAVLink HEARTBEAT messages to a Mavlink endpoint. */
+      fields needed to emit MAVLink HEARTBEAT messages to selected Mavlink endpoints. */
   class HeartbeatAgentConfig : public AgentConfig
   {
   public:
-    /// Name of the Mavlink endpoint to write HEARTBEAT messages to.
-    std::string mavlink_endpoint_name;
+    /// Multi-endpoint targeting: which connected endpoints receive heartbeats and how.
+    HeartbeatTargeting targeting;
     /// Frequency at which HEARTBEAT messages are emitted, in Hz. Defaults to 1.0.
     double heartbeat_freq = 1.0;
     /// MAVLink system id stamped on emitted HEARTBEAT messages. Defaults to 255 to avoid

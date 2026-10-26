@@ -5,6 +5,7 @@
 #include <mavlink_hub_sdk/manager_resource_requester/IManagerResourceRequester.h>
 
 #include "HeartbeatAgentConfig.h"
+#include "HeartbeatSender.h"
 
 #include <memory>
 
@@ -12,14 +13,15 @@ namespace pendarlab::app::mavlink_hub::plugin
 {
   using namespace pendarlab::sdk::mavlink_hub;
 
-  /** The heartbeat generator agent. Emits MAVLink HEARTBEAT messages to a Mavlink endpoint at
-      a configurable frequency on a background thread. */
+  /** The heartbeat generator agent. A thin wrapper over HeartbeatSender: it owns the agent
+      lifecycle (start/stop) and delegates the periodic multi-endpoint HEARTBEAT emission to
+      the MAVLink-aware HeartbeatSender. */
   class HeartbeatAgent : public Agent
   {
   public:
-    /** Constructs the agent, storing the config and the resource requester.
+    /** Constructs the agent, handing the config and requester to an internal HeartbeatSender.
         @param config the agent configuration.
-        @param requester used to obtain the Mavlink endpoint at start time. */
+        @param requester used to obtain the Mavlink endpoints at emit time. */
     HeartbeatAgent(const HeartbeatAgentConfig& config, std::unique_ptr<IManagerResourceRequester> requester);
     /// Destroys the agent, stopping all background activity.
     virtual ~HeartbeatAgent();
@@ -29,9 +31,9 @@ namespace pendarlab::app::mavlink_hub::plugin
     HeartbeatAgent& operator=(HeartbeatAgent&&) noexcept;
 
   protected:
-    /// Requests the Mavlink endpoint, wires and starts the heartbeat send-loop.
+    /// Starts the internal HeartbeatSender's periodic loop.
     virtual bool doStart() override;
-    /// Stops the heartbeat send-loop.
+    /// Stops the internal HeartbeatSender's periodic loop.
     virtual bool doStop() override;
     /// No-op configuration hook; configuration is fixed at construction.
     virtual bool doConfigure(const AgentConfig& config) override;
