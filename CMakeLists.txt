@@ -11,6 +11,7 @@ add_library(MavlinkHubHeartbeatGenerator SHARED
   src/HeartbeatAgent.cpp
   src/HeartbeatMessageBuilder.cpp
   src/HeartbeatSender.cpp
+  src/PeriodicSender.cpp
   src/HeartbeatAgentDefinition.cpp
 )
 target_include_directories(MavlinkHubHeartbeatGenerator PRIVATE
@@ -25,18 +26,18 @@ find_package(GTest CONFIG REQUIRED)
 
 enable_testing()
 
-add_executable(HeartbeatSenderTest
-  test/heartbeat_sender_test.cpp
+add_executable(PeriodicSenderTest
+  test/periodic_sender_test.cpp
 )
-target_include_directories(HeartbeatSenderTest PRIVATE
+target_include_directories(PeriodicSenderTest PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
-target_link_libraries(HeartbeatSenderTest
+target_link_libraries(PeriodicSenderTest
   PRIVATE MavlinkHubHeartbeatGenerator
   PRIVATE pendarlab::MavlinkHubSdk
   PRIVATE GTest::gtest_main
 )
-add_test(NAME HeartbeatSenderTest COMMAND HeartbeatSenderTest)
+add_test(NAME PeriodicSenderTest COMMAND PeriodicSenderTest)
 
 add_executable(HeartbeatAgentParseConfigTest
   test/heartbeat_agent_definition_parse_config_test.cpp

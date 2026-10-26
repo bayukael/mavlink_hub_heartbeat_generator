@@ -36,7 +36,7 @@ Endpoint names in `exclude`/`endpoints` that do not match a registered endpoint 
 
 `mavlink_version` is set by the MAVLink protocol on encode and is not configurable.
 
-All plugin types (`HeartbeatAgent`, `HeartbeatAgentConfig`, `HeartbeatAgentDefinition`, `HeartbeatSender`, `makeHeartbeatMessage`) live in the `pendarlab::app::mavlink_hub::plugin` namespace, reflecting that this repository is an application-side mavlink_hub plugin rather than part of the SDK.
+All plugin types (`HeartbeatAgent`, `HeartbeatAgentConfig`, `HeartbeatAgentDefinition`, `HeartbeatSender`, `PeriodicSender`, `makeHeartbeatMessage`) live in the `pendarlab::app::mavlink_hub::plugin` namespace, reflecting that this repository is an application-side mavlink_hub plugin rather than part of the SDK.
 
 ## Communication
 
@@ -73,13 +73,13 @@ The build compiles four GoogleTest executables:
 ```bash
 ctest --test-dir build
 # or run each directly:
-./build/HeartbeatSenderTest
+./build/PeriodicSenderTest
 ./build/HeartbeatAgentParseConfigTest
 ./build/HeartbeatMessageTest
 ./build/HeartbeatAgentTargetingTest
 ```
 
-`HeartbeatSenderTest` verifies that heartbeat emission is *observable* at the configured frequency (it counts messages sent over a time window) rather than merely assumed. `HeartbeatAgentTargetingTest` verifies the `all_except` and `listed` targeting modes against a mocked manager (which endpoints receive heartbeats, including empty-list and unknown-name behavior).
+`PeriodicSenderTest` verifies that heartbeat emission is *observable* at the configured frequency (it counts messages sent over a time window) rather than merely assumed. `HeartbeatAgentTargetingTest` verifies the `all_except` and `listed` targeting modes against a mocked manager (which endpoints receive heartbeats, including empty-list and unknown-name behavior).
 
 ### Making the plugin available to mavlink_hub
 
